@@ -1,6 +1,8 @@
 package com.tads.eaj.joffr.analises;
 
 import android.os.Bundle;
+import android.provider.ContactsContract;
+import android.support.annotation.MainThread;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.view.View;
@@ -12,13 +14,32 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.Button;
+import android.widget.QuickContactBadge;
+import android.widget.Toast;
 
 import com.jjoe64.graphview.GraphView;
+import com.jjoe64.graphview.series.DataPoint;
+import com.jjoe64.graphview.series.DataPointInterface;
+import com.jjoe64.graphview.series.LineGraphSeries;
+import com.jjoe64.graphview.series.OnDataPointTapListener;
+import com.jjoe64.graphview.series.Series;
+
+import static java.security.AccessController.getContext;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
+    int count = 1;
+
+    DataPoint[] pontos = new DataPoint[]{
+            new DataPoint(1,1)
+    };
+    DataPoint[] auxpontos;
+    LineGraphSeries<DataPoint> series;
+
     GraphView grafi;
+    Button bot;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -26,6 +47,53 @@ public class MainActivity extends AppCompatActivity
         setContentView(R.layout.activity_main);
 
         grafi = (GraphView)findViewById(R.id.graf);
+
+        series = new LineGraphSeries<>(pontos);
+        grafi.addSeries(series);
+
+        grafi.getViewport().setScalableY(true);
+        // set manual X bounds
+        grafi.getViewport().setXAxisBoundsManual(true);
+        grafi.getViewport().setMinX(1);
+        grafi.getViewport().setMaxX(5);
+
+        // set manual Y bounds
+        grafi.getViewport().setYAxisBoundsManual(true);
+        grafi.getViewport().setMinY(0);
+        grafi.getViewport().setMaxY(5);
+
+        //listener do ponto
+        series.setOnDataPointTapListener(new OnDataPointTapListener() {
+            @Override
+            public void onTap(Series series, DataPointInterface dataPoint) {
+                Toast.makeText(MainActivity.this, "Você clicou no ponto: "+dataPoint, Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        bot = (Button)findViewById(R.id.button);
+
+        bot.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+                count++;
+//                if (count > 5){
+//                    //AUMENTA OS LIMITES DO GRAFICO
+//                    grafi.getViewport().setMaxX(count);
+//                    grafi.getViewport().setMaxY(count);
+//                }
+                Toast.makeText(MainActivity.this, "contador: "+count, Toast.LENGTH_SHORT).show();
+                //aux pega os valores guardados para recriar o velho com um novo tamanho
+                auxpontos = new DataPoint[pontos.length];
+                auxpontos = pontos.clone();
+                pontos = new DataPoint[auxpontos.length+1];
+                for (int i=0; i<auxpontos.length; i++){
+                    pontos[i] = auxpontos[i];
+                }
+                pontos[pontos.length-1] = new DataPoint(count, count);
+                series.resetData(pontos);
+            }
+        });
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
