@@ -63,7 +63,7 @@ public class MainActivity extends AppCompatActivity
     private boolean assinou = false;
 
     //Declarações e inicializações para as notificações
-    private NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(this);
+    private NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(this, "MqttAlert");
     private TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
     private NotificationManager mNotificationManager;
     private int cont = 0;
