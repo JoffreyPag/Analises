@@ -4,10 +4,8 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
-import android.media.RingtoneManager;
 import android.os.Bundle;
-import android.provider.ContactsContract;
-import android.support.annotation.MainThread;
+import android.support.design.widget.BaseTransientBottomBar;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.NotificationCompat;
@@ -23,7 +21,7 @@ import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Button;
-import android.widget.QuickContactBadge;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.jjoe64.graphview.GraphView;
@@ -42,98 +40,27 @@ import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
+import org.eclipse.paho.client.mqttv3.MqttSecurityException;
 
-import static java.security.AccessController.getContext;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
+    static String MQTTHOST = "tcp://192.168.0.16:1883";
+    static String USERNAME = "teste";
+    static String SENHA = "teste";
+    String topico = "Temperatura";
+    boolean conectado = false;
+
+    MqttAndroidClient client;
+    MqttConnectOptions options;
+
     GraphView grafi;
+    Button bot;
+    TextView tv;
 
     DataPoint[] pontos = new DataPoint[]{new DataPoint(0, 0)};
-    DataPoint[] auxpontos;
     LineGraphSeries<DataPoint> series;
-
-    //Declaração para as mensagens de depuração
-    private static final String TAG = MainActivity.class.getSimpleName();
-
-    //Declarações e inicializações para o MQTT
-    private String clientId = MqttClient.generateClientId();
-    private MqttAndroidClient client;
-    private boolean assinou = false;
-
-    //Declarações e inicializações para as notificações
-    private NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(this, "MqttAlert");
-    private TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
-    private NotificationManager mNotificationManager;
-    private int cont = 0;
-
-    int count = 1;
-
-    private MqttCallback ClientCallBack = new MqttCallback() {
-        @Override
-        public void connectionLost(Throwable cause) {
-            //chamado sempre que a conexão com broker for perdida
-            Log.d("batata", "peda da conexção...Reconectando");
-            connectMQTT();
-            assinou = false;
-        }
-
-        @Override
-        public void messageArrived(String topic, MqttMessage message) throws Exception {
-            //indica a chegada de uma menssagem de algum topico inscrito
-            String msg = new String(message.getPayload());
-            Log.d(TAG, topic + ": " + msg);
-            if (topic.equals("/Temperatura")) {//APRESENTADA GRAFICAMENTE
-                int temp = Integer.parseInt(msg);
-                count++;
-                //aux pega os valores guardados para recriar o velho com um novo tamanho
-                auxpontos = new DataPoint[pontos.length];
-                auxpontos = pontos.clone();
-                pontos = new DataPoint[auxpontos.length + 1];
-                for (int i = 0; i < auxpontos.length; i++) {
-                    pontos[i] = auxpontos[i];
-                }
-                pontos[pontos.length - 1] = new DataPoint(count, temp);
-                series.resetData(pontos);
-            } else {
-                Log.d("batata", "NOTHING HAPPEN");
-                //mensagem publicada
-                int mId = 99;
-                mBuilder.setSmallIcon(R.drawable.ic_menu_send)
-                        .setContentTitle("Mensagem recebida")
-                        .setContentText(topic + ": " + message.toString())
-                        .setVibrate(new long[]{150, 300, 150, 600}) // Para Vibrar
-                        .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION));
-                // Para apitar
-                // Executa a notificação
-                mNotificationManager.notify(mId, mBuilder.build());
-            }
-        }
-
-        @Override
-        public void deliveryComplete(IMqttDeliveryToken token) {
-            Log.d(TAG, "Entregue!");
-        }
-    };
-
-    private IMqttActionListener MqttCallBackApp = new IMqttActionListener() {
-        @Override
-        public void onSuccess(IMqttToken asyncActionToken) {
-            //Acionado quando a conexão com o server for estabelecida, e as assinaturas de topicos forem efetivadas
-            Log.d(TAG, "on Sucess");
-            if (!assinou) {
-                subscribeMQTT();
-                assinou = true;
-            }
-        }
-
-        @Override
-        public void onFailure(IMqttToken asyncActionToken, Throwable exception) {
-            //problemas na assinatura
-            Log.d("batata", "onFailure");
-        }
-    };
 
 
     @Override
@@ -142,6 +69,8 @@ public class MainActivity extends AppCompatActivity
         setContentView(R.layout.activity_main);
 
         Log.d("batata", "onCreate");
+        bot = (Button) findViewById(R.id.button);
+        tv = (TextView) findViewById(R.id.tv);
         grafi = (GraphView) findViewById(R.id.graf);
 
         series = new LineGraphSeries<>(pontos);
@@ -173,8 +102,18 @@ public class MainActivity extends AppCompatActivity
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
+                //AQUI TENTA RECONECTAR, CASO ESTEJA DESCONECTADO
+                if (!conectado){
+                    ConectaMQTT();
+                }else{
+                    Snackbar.make(view, "Você já esta conectado", Snackbar.LENGTH_SHORT).show();
+                    return;
+                }
+                if (conectado){
+                    Snackbar.make(view, "Reconectou", Snackbar.LENGTH_SHORT).show();
+                }else{
+                    Snackbar.make(view, "Erro ao Reconectar", Snackbar.LENGTH_SHORT).show();
+                }
             }
         });
 
@@ -187,10 +126,108 @@ public class MainActivity extends AppCompatActivity
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
-        initMQTT();
-        connectMQTT();
-        startNotifications();
+        //xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+                        //TRABALHANDO O MQTT CLIENT
+        //xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+        String clientId = MqttClient.generateClientId();
+        client = new MqttAndroidClient(this.getApplicationContext(), MQTTHOST, clientId);
+
+        options = new MqttConnectOptions();
+        options.setUserName(USERNAME);
+        options.setPassword(SENHA.toCharArray());
+
+//        try {
+//            IMqttToken token = client.connect(options);
+//            token.setActionCallback(new IMqttActionListener() {
+//                @Override
+//                public void onSuccess(IMqttToken asyncActionToken) {
+//                    //conectou
+//                    Log.d("teste", "onSucess");
+//                    Toast.makeText(MainActivity.this, "Conectou", Toast.LENGTH_SHORT).show();
+//                    setSubcription();
+//                    conectado = true;
+//                }
+//
+//                @Override
+//                public void onFailure(IMqttToken asyncActionToken, Throwable exception) {
+//                    //algo deu errado
+//                    Log.d("teste", "onFailure");
+//                    Log.d("teste", exception.toString());
+//                    Toast.makeText(MainActivity.this, "Não Conectou", Toast.LENGTH_SHORT).show();
+//                }
+//            });
+//        } catch (MqttException e) {
+//            e.printStackTrace();
+//        }
+
+        ConectaMQTT();
+
+        client.setCallback(new MqttCallback() {
+            @Override
+            public void connectionLost(Throwable cause) {
+
+            }
+
+            @Override
+            public void messageArrived(String topic, MqttMessage message) throws Exception {
+                tv.setText(new String(message.getPayload()));
+            }
+
+            @Override
+            public void deliveryComplete(IMqttDeliveryToken token) {
+
+            }
+        });
+
     }
+
+    private void ConectaMQTT(){
+        try {
+            IMqttToken token = client.connect(options);
+            token.setActionCallback(new IMqttActionListener() {
+                @Override
+                public void onSuccess(IMqttToken asyncActionToken) {
+                    //conectou
+                    Log.d("teste", "onSucess");
+                    Toast.makeText(MainActivity.this, "Conectou", Toast.LENGTH_SHORT).show();
+                    setSubcription();
+                    conectado = true;
+                }
+
+                @Override
+                public void onFailure(IMqttToken asyncActionToken, Throwable exception) {
+                    //algo deu errado
+                    Log.d("teste", "onFailure");
+                    Log.d("teste", exception.toString());
+                    Toast.makeText(MainActivity.this, "Não Conectou", Toast.LENGTH_SHORT).show();
+                }
+            });
+        } catch (MqttException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void Pub(View view){
+        String topic = "teste";
+        String message = "SCORT THE PAYLOAD!";
+
+        try{
+            client.publish(topic, message.getBytes(), 0, false);
+        }catch (MqttException e){
+            e.printStackTrace();
+        }
+    }
+
+    private void setSubcription(){
+        try{
+            client.subscribe(topico, 0);
+        } catch (MqttException e) {
+            e.printStackTrace();
+        }
+    }
+
+    //xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
     @Override
     public void onBackPressed() {
@@ -249,57 +286,4 @@ public class MainActivity extends AppCompatActivity
         return true;
     }
 
-    //inicialização do cliente MQTT
-    private void initMQTT() {
-        client = new MqttAndroidClient(this.getApplicationContext(), "192.168.0.16", clientId);
-        client.setCallback(ClientCallBack);
-    }
-
-    //inciialização do MQTT e conexão inicial
-    private void connectMQTT() {
-        try {
-            MqttConnectOptions options = new MqttConnectOptions();
-            options.setUserName("teste");
-            options.setPassword("teste".toCharArray());
-            IMqttToken token = client.connect(options);
-            token.setActionCallback(MqttCallBackApp);
-        } catch (MqttException e) {
-            e.printStackTrace();
-        }
-    }
-
-    // Cria as classes necessárias para notificações: Intent, PendingIntent e acessa o mNotificationManager
-    private void startNotifications(){
-        Intent resultIntent = new Intent(this, MainActivity.class);
-        stackBuilder.addParentStack(MainActivity.class);
-        stackBuilder.addNextIntent(resultIntent);
-        PendingIntent resultPendingIntent =
-                stackBuilder.getPendingIntent(
-                        0,
-                        PendingIntent.FLAG_UPDATE_CURRENT
-                );
-        mBuilder.setContentIntent(resultPendingIntent);
-        mNotificationManager =
-                (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-
-    }
-
-    //Assina as menssagens MQTT desejadas
-    public void subscribeMQTT() {
-        int qos = 1;
-        try {
-            if (!client.isConnected()) {
-                connectMQTT();
-            }
-            IMqttToken subTokenU = client.subscribe("/Temperatura", qos);
-            subTokenU.setActionCallback(MqttCallBackApp);
-        } catch (MqttException e) {
-            e.printStackTrace();
-        }
-    }
-
-    //TODO:FAZER DEPOIS
-    //Trata o clique do botão, publicando as mensagens
-    public void onClickPub(View view) {
-    }//Evento disparado no vlique botao
 }
