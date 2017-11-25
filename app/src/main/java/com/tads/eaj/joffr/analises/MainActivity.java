@@ -1,15 +1,10 @@
 package com.tads.eaj.joffr.analises;
 
-import android.app.NotificationManager;
-import android.app.PendingIntent;
-import android.content.Context;
-import android.content.Intent;
+
 import android.os.Bundle;
-import android.support.design.widget.BaseTransientBottomBar;
+import android.os.Vibrator;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
-import android.support.v4.app.NotificationCompat;
-import android.support.v4.app.TaskStackBuilder;
 import android.util.Log;
 import android.view.View;
 import android.support.design.widget.NavigationView;
@@ -40,7 +35,6 @@ import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
-import org.eclipse.paho.client.mqttv3.MqttSecurityException;
 
 
 public class MainActivity extends AppCompatActivity
@@ -54,6 +48,8 @@ public class MainActivity extends AppCompatActivity
 
     MqttAndroidClient client;
     MqttConnectOptions options;
+
+    Vibrator vibrator;
 
     GraphView grafi;
     Button bot;
@@ -71,6 +67,8 @@ public class MainActivity extends AppCompatActivity
         Log.d("batata", "onCreate");
         bot = (Button) findViewById(R.id.button);
         tv = (TextView) findViewById(R.id.tv);
+        vibrator = (Vibrator)getSystemService(VIBRATOR_SERVICE);
+
         grafi = (GraphView) findViewById(R.id.graf);
 
         series = new LineGraphSeries<>(pontos);
@@ -137,30 +135,6 @@ public class MainActivity extends AppCompatActivity
         options.setUserName(USERNAME);
         options.setPassword(SENHA.toCharArray());
 
-//        try {
-//            IMqttToken token = client.connect(options);
-//            token.setActionCallback(new IMqttActionListener() {
-//                @Override
-//                public void onSuccess(IMqttToken asyncActionToken) {
-//                    //conectou
-//                    Log.d("teste", "onSucess");
-//                    Toast.makeText(MainActivity.this, "Conectou", Toast.LENGTH_SHORT).show();
-//                    setSubcription();
-//                    conectado = true;
-//                }
-//
-//                @Override
-//                public void onFailure(IMqttToken asyncActionToken, Throwable exception) {
-//                    //algo deu errado
-//                    Log.d("teste", "onFailure");
-//                    Log.d("teste", exception.toString());
-//                    Toast.makeText(MainActivity.this, "Não Conectou", Toast.LENGTH_SHORT).show();
-//                }
-//            });
-//        } catch (MqttException e) {
-//            e.printStackTrace();
-//        }
-
         ConectaMQTT();
 
         client.setCallback(new MqttCallback() {
@@ -172,6 +146,8 @@ public class MainActivity extends AppCompatActivity
             @Override
             public void messageArrived(String topic, MqttMessage message) throws Exception {
                 tv.setText(new String(message.getPayload()));
+
+                vibrator.vibrate(500);
             }
 
             @Override
