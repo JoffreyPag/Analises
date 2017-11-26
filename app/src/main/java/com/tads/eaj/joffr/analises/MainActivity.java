@@ -63,6 +63,7 @@ public class MainActivity extends AppCompatActivity
     //DataPoint[] pontos = new DataPoint[]{new DataPoint(0, 0)};
     LineGraphSeries<DataPoint> series;
 
+    //TODO: GRAFICO 2 DE UMIDADE
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -70,7 +71,7 @@ public class MainActivity extends AppCompatActivity
         setContentView(R.layout.activity_main);
 
         Log.d("batata", "onCreate");
-        tv = (TextView) findViewById(R.id.tv);
+        tv = (TextView) findViewById(R.id.tvt);
         tela = findViewById(R.id.tela);
 
         vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
