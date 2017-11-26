@@ -18,7 +18,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -74,8 +73,8 @@ public class MainActivity extends AppCompatActivity
         tv = (TextView) findViewById(R.id.tv);
         tela = findViewById(R.id.tela);
 
-        vibrator = (Vibrator)getSystemService(VIBRATOR_SERVICE);
-        wifi = (WifiManager)getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+        vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
+        wifi = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
 
         grafi = (GraphView) findViewById(R.id.graf);
 
@@ -104,14 +103,14 @@ public class MainActivity extends AppCompatActivity
             }
         });
 
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        final Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-            Pub();
+                Pub();
             }
         });
 
@@ -125,10 +124,8 @@ public class MainActivity extends AppCompatActivity
         navigationView.setNavigationItemSelectedListener(this);
 
 
-
-
         //xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-                        //TRABALHANDO O MQTT CLIENT
+        //TRABALHANDO O MQTT CLIENT
         //xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
         String clientId = MqttClient.generateClientId();
@@ -139,10 +136,10 @@ public class MainActivity extends AppCompatActivity
         options.setPassword(SENHA.toCharArray());
 
         //TESTA SE O DISPOSITIVO ESTA CONECTADO AO WIFI, SE NAO ESTIVER ELE NAO TENTARA CONECTAR AO BROKER
-        if (wifi.isWifiEnabled()){
+        if (wifi.isWifiEnabled()) {
 //            Toast.makeText(this, R.string.wifiConect, Toast.LENGTH_SHORT).show();
             ConectaMQTT();
-        }else {
+        } else {
 //            Toast.makeText(this, "o wifi ta desligado", Toast.LENGTH_SHORT).show();
             Snackbar.make(tela, R.string.wifidesc, Snackbar.LENGTH_SHORT).show();
         }
@@ -158,17 +155,19 @@ public class MainActivity extends AppCompatActivity
                 String temp = new String(message.getPayload());
                 float y = Float.valueOf(temp);//Integer.parseInt(temp);
                 tv.setText(temp);
-                count ++;
+                count++;
                 series.appendData(new DataPoint(count, y), true, 40);
                 if (y < 26) {
                     series.setColor(Color.rgb(0, 188, 212));
-                    series.setBackgroundColor(Color.argb(50,79, 195, 247));
-                }else if (y > 31){
+                    series.setBackgroundColor(Color.argb(50, 79, 195, 247));
+                    setTheme(R.style.TemaAzul);
+                } else if (y > 31) {
                     series.setColor(Color.rgb(244, 67, 54));
-                    series.setBackgroundColor(Color.argb(50,229, 115, 115));
-                }else{
+                    series.setBackgroundColor(Color.argb(50, 229, 115, 115));
+                    setTheme(R.style.TemaVermelho);
+                } else {
                     series.setColor(Color.rgb(76, 175, 80));
-                    series.setBackgroundColor(Color.argb(50,129, 199, 132));
+                    series.setBackgroundColor(Color.argb(50, 129, 199, 132));
                 }
                 //vibrator.vibrate(500);
             }
@@ -181,7 +180,7 @@ public class MainActivity extends AppCompatActivity
 
     }
 
-    private void ConectaMQTT(){
+    private void ConectaMQTT() {
         try {
             IMqttToken token = client.connect(options);
             token.setActionCallback(new IMqttActionListener() {
@@ -210,19 +209,19 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    public void Pub(){
+    public void Pub() {
         String topic = "teste";
         String message = "SCORT THE PAYLOAD!";
 
-        try{
+        try {
             client.publish(topic, message.getBytes(), 0, false);
-        }catch (MqttException e){
+        } catch (MqttException e) {
             e.printStackTrace();
         }
     }
 
-    private void setSubcription(){
-        try{
+    private void setSubcription() {
+        try {
             client.subscribe(topico, 0);
         } catch (MqttException e) {
             e.printStackTrace();
@@ -258,14 +257,14 @@ public class MainActivity extends AppCompatActivity
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_Reconect) {
             //AQUI TENTA RECONECTAR, CASO ESTEJA DESCONECTADO
-            if (!conectado){
-                if (wifi.isWifiEnabled()){
+            if (!conectado) {
+                if (wifi.isWifiEnabled()) {
                     ConectaMQTT();
-                }else {
+                } else {
                     Snackbar.make(tela, "O wifi está desligado", Snackbar.LENGTH_SHORT).show();
                     return true;
                 }
-            }else{
+            } else {
                 Snackbar.make(tela, "Você já esta conectado", Snackbar.LENGTH_SHORT).show();
             }
 
