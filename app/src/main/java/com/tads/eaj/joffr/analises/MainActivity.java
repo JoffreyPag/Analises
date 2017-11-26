@@ -1,6 +1,9 @@
 package com.tads.eaj.joffr.analises;
 
 
+import android.content.Context;
+import android.graphics.Color;
+import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.Vibrator;
 import android.support.design.widget.FloatingActionButton;
@@ -40,11 +43,14 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
+    WifiManager wifi;
+
     static String MQTTHOST = "tcp://192.168.0.16:1883";
     static String USERNAME = "teste";
     static String SENHA = "teste";
     String topico = "Temperatura";
     boolean conectado = false;
+    int count = 0;
 
     MqttAndroidClient client;
     MqttConnectOptions options;
@@ -52,10 +58,10 @@ public class MainActivity extends AppCompatActivity
     Vibrator vibrator;
 
     GraphView grafi;
-    Button bot;
     TextView tv;
+    View tela;
 
-    DataPoint[] pontos = new DataPoint[]{new DataPoint(0, 0)};
+    //DataPoint[] pontos = new DataPoint[]{new DataPoint(0, 0)};
     LineGraphSeries<DataPoint> series;
 
 
@@ -65,25 +71,30 @@ public class MainActivity extends AppCompatActivity
         setContentView(R.layout.activity_main);
 
         Log.d("batata", "onCreate");
-        bot = (Button) findViewById(R.id.button);
         tv = (TextView) findViewById(R.id.tv);
+        tela = findViewById(R.id.tela);
+
         vibrator = (Vibrator)getSystemService(VIBRATOR_SERVICE);
+        wifi = (WifiManager)getApplicationContext().getSystemService(Context.WIFI_SERVICE);
 
         grafi = (GraphView) findViewById(R.id.graf);
 
-        series = new LineGraphSeries<>(pontos);
+        //series = new LineGraphSeries<>(pontos);
+        series = new LineGraphSeries<>();
+        series.setDrawBackground(true);
+        series.setDrawDataPoints(true);
         grafi.addSeries(series);
 
-        grafi.getViewport().setScalableY(true);
+        grafi.getViewport().setScrollable(true);
         // set manual X bounds
         grafi.getViewport().setXAxisBoundsManual(true);
         grafi.getViewport().setMinX(1);
-        grafi.getViewport().setMaxX(5);
+        grafi.getViewport().setMaxX(10);
 
         // set manual Y bounds
         grafi.getViewport().setYAxisBoundsManual(true);
-        grafi.getViewport().setMinY(0);
-        grafi.getViewport().setMaxY(5);
+        grafi.getViewport().setMinY(24);
+        grafi.getViewport().setMaxY(31);
 
         //listener do ponto
         series.setOnDataPointTapListener(new OnDataPointTapListener() {
@@ -100,18 +111,7 @@ public class MainActivity extends AppCompatActivity
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                //AQUI TENTA RECONECTAR, CASO ESTEJA DESCONECTADO
-                if (!conectado){
-                    ConectaMQTT();
-                }else{
-                    Snackbar.make(view, "Você já esta conectado", Snackbar.LENGTH_SHORT).show();
-                    return;
-                }
-                if (conectado){
-                    Snackbar.make(view, "Reconectou", Snackbar.LENGTH_SHORT).show();
-                }else{
-                    Snackbar.make(view, "Erro ao Reconectar", Snackbar.LENGTH_SHORT).show();
-                }
+            Pub();
             }
         });
 
@@ -124,6 +124,9 @@ public class MainActivity extends AppCompatActivity
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
+
+
+
         //xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
                         //TRABALHANDO O MQTT CLIENT
         //xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
@@ -135,19 +138,39 @@ public class MainActivity extends AppCompatActivity
         options.setUserName(USERNAME);
         options.setPassword(SENHA.toCharArray());
 
-        ConectaMQTT();
+        //TESTA SE O DISPOSITIVO ESTA CONECTADO AO WIFI, SE NAO ESTIVER ELE NAO TENTARA CONECTAR AO BROKER
+        if (wifi.isWifiEnabled()){
+//            Toast.makeText(this, R.string.wifiConect, Toast.LENGTH_SHORT).show();
+            ConectaMQTT();
+        }else {
+//            Toast.makeText(this, "o wifi ta desligado", Toast.LENGTH_SHORT).show();
+            Snackbar.make(tela, R.string.wifidesc, Snackbar.LENGTH_SHORT).show();
+        }
 
         client.setCallback(new MqttCallback() {
             @Override
             public void connectionLost(Throwable cause) {
-
+                Snackbar.make(tela, "Conexão com o Broker perdida", Snackbar.LENGTH_SHORT).show();
             }
 
             @Override
             public void messageArrived(String topic, MqttMessage message) throws Exception {
-                tv.setText(new String(message.getPayload()));
-
-                vibrator.vibrate(500);
+                String temp = new String(message.getPayload());
+                float y = Float.valueOf(temp);//Integer.parseInt(temp);
+                tv.setText(temp);
+                count ++;
+                series.appendData(new DataPoint(count, y), true, 40);
+                if (y < 26) {
+                    series.setColor(Color.rgb(0, 188, 212));
+                    series.setBackgroundColor(Color.argb(50,79, 195, 247));
+                }else if (y > 31){
+                    series.setColor(Color.rgb(244, 67, 54));
+                    series.setBackgroundColor(Color.argb(50,229, 115, 115));
+                }else{
+                    series.setColor(Color.rgb(76, 175, 80));
+                    series.setBackgroundColor(Color.argb(50,129, 199, 132));
+                }
+                //vibrator.vibrate(500);
             }
 
             @Override
@@ -165,8 +188,10 @@ public class MainActivity extends AppCompatActivity
                 @Override
                 public void onSuccess(IMqttToken asyncActionToken) {
                     //conectou
-                    Log.d("teste", "onSucess");
-                    Toast.makeText(MainActivity.this, "Conectou", Toast.LENGTH_SHORT).show();
+//                    Log.d("teste", "onSucess");
+//                    Toast.makeText(MainActivity.this, "Conectou", Toast.LENGTH_SHORT).show();
+                    Snackbar.make(tela, R.string.BrokerConect, Snackbar.LENGTH_SHORT).show();
+
                     setSubcription();
                     conectado = true;
                 }
@@ -174,9 +199,10 @@ public class MainActivity extends AppCompatActivity
                 @Override
                 public void onFailure(IMqttToken asyncActionToken, Throwable exception) {
                     //algo deu errado
-                    Log.d("teste", "onFailure");
-                    Log.d("teste", exception.toString());
-                    Toast.makeText(MainActivity.this, "Não Conectou", Toast.LENGTH_SHORT).show();
+//                    Log.d("teste", "onFailure");
+//                    Log.d("teste", exception.toString());
+//                    Toast.makeText(MainActivity.this, "Não Conectou", Toast.LENGTH_SHORT).show();
+                    Snackbar.make(tela, R.string.BrokerErr, Snackbar.LENGTH_SHORT).show();
                 }
             });
         } catch (MqttException e) {
@@ -184,7 +210,7 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    public void Pub(View view){
+    public void Pub(){
         String topic = "teste";
         String message = "SCORT THE PAYLOAD!";
 
@@ -230,7 +256,19 @@ public class MainActivity extends AppCompatActivity
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
+        if (id == R.id.action_Reconect) {
+            //AQUI TENTA RECONECTAR, CASO ESTEJA DESCONECTADO
+            if (!conectado){
+                if (wifi.isWifiEnabled()){
+                    ConectaMQTT();
+                }else {
+                    Snackbar.make(tela, "O wifi está desligado", Snackbar.LENGTH_SHORT).show();
+                    return true;
+                }
+            }else{
+                Snackbar.make(tela, "Você já esta conectado", Snackbar.LENGTH_SHORT).show();
+            }
+
             return true;
         }
 

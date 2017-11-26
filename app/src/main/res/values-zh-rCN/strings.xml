@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">分析</string>
+    <string name="aguardando">等候</string>
+    <string name="publicar">发表</string>
+    <string name="wifidesc">Wifi已关闭</string>
+    <string name="wifiConect">无线上网</string>
+    <string name="BrokerConect">连接到经纪人</string>
+    <string name="BrokerErr">连接到代理时出错</string>
+</resources>

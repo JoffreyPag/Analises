@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Análises</string>
+    <string name="publicar">Publicar</string>
+    <string name="aguardando">Aguardando</string>
+    <string name="wifiConect">O wifi ta ligado</string>
+    <string name="wifidesc">O Wifi está desligado</string>
+    <string name="BrokerConect">Conectado ao Broker</string>
+    <string name="BrokerErr">Erro ao conectar com o Broker</string>
+</resources>

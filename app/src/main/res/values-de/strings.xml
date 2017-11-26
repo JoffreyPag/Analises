@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Bewertungen</string>
+    <string name="aguardando">Warten</string>
+    <string name="publicar">Veröffentlichen</string>
+    <string name="wifidesc">WLAN ist ausgeschaltet</string>
+    <string name="wifiConect">WLAN ist eingeschaltet</string>
+    <string name="BrokerConect">Verbunden mit Broker</string>
+    <string name="BrokerErr">Fehler beim Verbinden mit Broker</string>
+</resources>

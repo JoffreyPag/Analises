@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">анализы</string>
+    <string name="aguardando">"ожидание "</string>
+    <string name="publicar">публиковать</string>
+    <string name="wifidesc">Wi-Fi отключен</string>
+    <string name="wifiConect">Wi-Fi включен</string>
+    <string name="BrokerConect">Подключено к брокеру</string>
+    <string name="BrokerErr">Ошибка подключения к брокеру</string>
+</resources>

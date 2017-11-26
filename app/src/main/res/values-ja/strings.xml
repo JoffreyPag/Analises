@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">レビュー</string>
+    <string name="aguardando">待っている</string>
+    <string name="publicar">"公開する "</string>
+    <string name="wifidesc">Wifiはオフです</string>
+    <string name="wifiConect">Wifiがオンです</string>
+    <string name="BrokerConect">ブローカーに接続</string>
+    <string name="BrokerErr">ブローカへの接続エラー</string>
+</resources>
