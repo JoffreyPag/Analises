@@ -161,11 +161,9 @@ public class MainActivity extends AppCompatActivity
                 if (y < 26) {
                     series.setColor(Color.rgb(0, 188, 212));
                     series.setBackgroundColor(Color.argb(50, 79, 195, 247));
-                    setTheme(R.style.TemaAzul);
                 } else if (y > 31) {
                     series.setColor(Color.rgb(244, 67, 54));
                     series.setBackgroundColor(Color.argb(50, 229, 115, 115));
-                    setTheme(R.style.TemaVermelho);
                 } else {
                     series.setColor(Color.rgb(76, 175, 80));
                     series.setBackgroundColor(Color.argb(50, 129, 199, 132));
