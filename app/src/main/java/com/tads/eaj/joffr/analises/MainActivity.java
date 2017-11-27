@@ -47,62 +47,36 @@ public class MainActivity extends AppCompatActivity
     static String MQTTHOST = "tcp://192.168.0.16:1883";
     static String USERNAME = "teste";
     static String SENHA = "teste";
-    String topico = "Temperatura";
+    String topico = "Temperatura", topicoU = "Umidade";
     boolean conectado = false;
-    int count = 0;
+    int xT = 0, xU = 0;
 
     MqttAndroidClient client;
     MqttConnectOptions options;
 
     Vibrator vibrator;
 
-    GraphView grafi;
-    TextView tv;
+    GraphView grafi, grafi2;
+    TextView tv, tvh;
     View tela;
 
     //DataPoint[] pontos = new DataPoint[]{new DataPoint(0, 0)};
-    LineGraphSeries<DataPoint> series;
-
-    //TODO: GRAFICO 2 DE UMIDADE
+    LineGraphSeries<DataPoint> series, series2;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        Log.d("batata", "onCreate");
+//        Log.d("batata", "onCreate");
         tv = (TextView) findViewById(R.id.tvt);
+        tvh = (TextView)findViewById(R.id.tvH);
         tela = findViewById(R.id.tela);
 
         vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
         wifi = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
 
-        grafi = (GraphView) findViewById(R.id.graf);
-
-        //series = new LineGraphSeries<>(pontos);
-        series = new LineGraphSeries<>();
-        series.setDrawBackground(true);
-        series.setDrawDataPoints(true);
-        grafi.addSeries(series);
-
-        grafi.getViewport().setScrollable(true);
-        // set manual X bounds
-        grafi.getViewport().setXAxisBoundsManual(true);
-        grafi.getViewport().setMinX(1);
-        grafi.getViewport().setMaxX(10);
-
-        // set manual Y bounds
-        grafi.getViewport().setYAxisBoundsManual(true);
-        grafi.getViewport().setMinY(24);
-        grafi.getViewport().setMaxY(31);
-
-        //listener do ponto
-        series.setOnDataPointTapListener(new OnDataPointTapListener() {
-            @Override
-            public void onTap(Series series, DataPointInterface dataPoint) {
-                Toast.makeText(MainActivity.this, "Você clicou no ponto: " + dataPoint, Toast.LENGTH_SHORT).show();
-            }
-        });
+        SetGraficos();
 
         final Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -149,24 +123,44 @@ public class MainActivity extends AppCompatActivity
             @Override
             public void connectionLost(Throwable cause) {
                 Snackbar.make(tela, "Conexão com o Broker perdida", Snackbar.LENGTH_SHORT).show();
+                conectado = false;
             }
 
             @Override
             public void messageArrived(String topic, MqttMessage message) throws Exception {
-                String temp = new String(message.getPayload());
-                float y = Float.valueOf(temp);//Integer.parseInt(temp);
-                tv.setText(temp);
-                count++;
-                series.appendData(new DataPoint(count, y), true, 40);
-                if (y < 26) {
-                    series.setColor(Color.rgb(0, 188, 212));
-                    series.setBackgroundColor(Color.argb(50, 79, 195, 247));
-                } else if (y > 31) {
-                    series.setColor(Color.rgb(244, 67, 54));
-                    series.setBackgroundColor(Color.argb(50, 229, 115, 115));
-                } else {
-                    series.setColor(Color.rgb(76, 175, 80));
-                    series.setBackgroundColor(Color.argb(50, 129, 199, 132));
+                String temp;
+                if (topic.equals(topico)) {
+                    temp = new String(message.getPayload());
+                    float y = Float.valueOf(temp);//Integer.parseInt(temp);
+                    tv.setText(temp);
+                    xT++;
+                    series.appendData(new DataPoint(xT, y), true, 40);
+                    if (y < 26) {
+                        series.setColor(Color.rgb(0, 188, 212));
+                        series.setBackgroundColor(Color.argb(50, 79, 195, 247));
+                    } else if (y > 31) {
+                        series.setColor(Color.rgb(244, 67, 54));
+                        series.setBackgroundColor(Color.argb(50, 229, 115, 115));
+                    } else {
+                        series.setColor(Color.rgb(76, 175, 80));
+                        series.setBackgroundColor(Color.argb(50, 129, 199, 132));
+                    }
+                }else if (topic.equals(topicoU)){
+                    temp = new String(message.getPayload());
+                    float y = Float.valueOf(temp);
+                    tvh.setText(temp);
+                    xU ++;
+                    series2.appendData(new DataPoint(xU, y), true, 40);
+                    if (y > 80) {
+                        series2.setColor(Color.rgb(0, 188, 212));
+                        series2.setBackgroundColor(Color.argb(50, 79, 195, 247));
+                    } else if (y < 30){
+                        series2.setColor(Color.rgb(255, 193, 7));
+                        series2.setColor(Color.argb(50, 255, 213, 79));
+                    }else{
+                        series2.setColor(Color.rgb(76, 175, 80));
+                        series2.setBackgroundColor(Color.argb(50, 129, 199, 132));
+                    }
                 }
                 //vibrator.vibrate(500);
             }
@@ -222,12 +216,60 @@ public class MainActivity extends AppCompatActivity
     private void setSubcription() {
         try {
             client.subscribe(topico, 0);
+            client.subscribe(topicoU, 0);
         } catch (MqttException e) {
             e.printStackTrace();
         }
     }
 
     //xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+    public void SetGraficos(){
+        //GRAFICO 1
+        grafi = (GraphView) findViewById(R.id.graf);
+        grafi2 = (GraphView)findViewById(R.id.graf2);
+        //series = new LineGraphSeries<>(pontos);
+        series = new LineGraphSeries<>();
+        series.setDrawBackground(true);
+        series.setDrawDataPoints(true);
+        grafi.addSeries(series);
+        grafi.getViewport().setScrollable(true);
+        // set manual X bounds
+        grafi.getViewport().setXAxisBoundsManual(true);
+        grafi.getViewport().setMinX(1);
+        grafi.getViewport().setMaxX(10);
+        // set manual Y bounds
+        grafi.getViewport().setYAxisBoundsManual(true);
+        grafi.getViewport().setMinY(24);
+        grafi.getViewport().setMaxY(31);
+        //listener do ponto
+        series.setOnDataPointTapListener(new OnDataPointTapListener() {
+            @Override
+            public void onTap(Series series, DataPointInterface dataPoint) {
+                Toast.makeText(MainActivity.this, "Você clicou no ponto: " + dataPoint, Toast.LENGTH_SHORT).show();
+            }
+        });
+        //GRAFICO 2
+        series2 = new LineGraphSeries<>();
+        series2.setDrawBackground(true);
+        series2.setDrawDataPoints(true);
+        grafi2.addSeries(series2);
+        grafi2.getViewport().setScrollable(true);
+        // set manual X bounds
+        grafi2.getViewport().setXAxisBoundsManual(true);
+        grafi2.getViewport().setMinX(1);
+        grafi2.getViewport().setMaxX(50);
+        // set manual Y bounds
+        grafi2.getViewport().setYAxisBoundsManual(true);
+        grafi2.getViewport().setMinY(0);
+        grafi2.getViewport().setMaxY(100);
+        series2.setOnDataPointTapListener(new OnDataPointTapListener() {
+            @Override
+            public void onTap(Series series, DataPointInterface dataPoint) {
+                Toast.makeText(MainActivity.this, "Você clicou no ponto: " + dataPoint, Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
 
     @Override
     public void onBackPressed() {
