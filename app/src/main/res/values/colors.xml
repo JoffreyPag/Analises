@@ -13,4 +13,6 @@
     <color name="colorAccentAzul">#40c4ff</color>
 
     <color name="background_material_light">#fafafa</color>
+
+    <color name="black_overlay">#66000000</color>
 </resources>

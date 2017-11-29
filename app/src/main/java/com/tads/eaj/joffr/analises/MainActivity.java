@@ -2,13 +2,12 @@ package com.tads.eaj.joffr.analises;
 
 
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Color;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
-import android.os.Vibrator;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
-import android.util.Log;
 import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -44,9 +43,9 @@ public class MainActivity extends AppCompatActivity
 
     WifiManager wifi;
 
-    static String MQTTHOST = "tcp://192.168.0.16:1883";
-    static String USERNAME = "teste";
-    static String SENHA = "teste";
+    static String MQTTHOST = "tcp://192.168.50.1:1883";
+    static String USERNAME = "JoffrMQTT";
+    static String SENHA = "mosquito";
     String topico = "Temperatura", topicoU = "Umidade";
     boolean conectado = false;
     int xT = 0, xU = 0;
@@ -70,7 +69,7 @@ public class MainActivity extends AppCompatActivity
 
 //        Log.d("batata", "onCreate");
         tv = (TextView) findViewById(R.id.tvt);
-        tvh = (TextView)findViewById(R.id.tvH);
+        tvh = (TextView) findViewById(R.id.tvH);
         tela = findViewById(R.id.tela);
 
 //        vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
@@ -145,19 +144,19 @@ public class MainActivity extends AppCompatActivity
                         series.setColor(Color.rgb(76, 175, 80));
                         series.setBackgroundColor(Color.argb(50, 129, 199, 132));
                     }
-                }else if (topic.equals(topicoU)){
+                } else if (topic.equals(topicoU)) {
                     temp = new String(message.getPayload());
                     float y = Float.valueOf(temp);
                     tvh.setText(temp);
-                    xU ++;
+                    xU++;
                     series2.appendData(new DataPoint(xU, y), true, 40);
                     if (y > 80) {
                         series2.setColor(Color.rgb(0, 188, 212));
                         series2.setBackgroundColor(Color.argb(50, 79, 195, 247));
-                    } else if (y < 30){
+                    } else if (y < 30) {
                         series2.setColor(Color.rgb(255, 193, 7));
                         series2.setColor(Color.argb(50, 255, 213, 79));
-                    }else{
+                    } else {
                         series2.setColor(Color.rgb(76, 175, 80));
                         series2.setBackgroundColor(Color.argb(50, 129, 199, 132));
                     }
@@ -224,10 +223,10 @@ public class MainActivity extends AppCompatActivity
 
     //xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
-    public void SetGraficos(){
+    public void SetGraficos() {
         //GRAFICO 1
         grafi = (GraphView) findViewById(R.id.graf);
-        grafi2 = (GraphView)findViewById(R.id.graf2);
+        grafi2 = (GraphView) findViewById(R.id.graf2);
         //series = new LineGraphSeries<>(pontos);
         series = new LineGraphSeries<>();
         series.setDrawBackground(true);
@@ -325,13 +324,8 @@ public class MainActivity extends AppCompatActivity
             // Handle the camera action
         } else if (id == R.id.nav_gallery) {
 
-        } else if (id == R.id.nav_slideshow) {
-
-        } else if (id == R.id.nav_manage) {
-
-        } else if (id == R.id.nav_share) {
-
-        } else if (id == R.id.nav_send) {
+        } else if (id == R.id.nav_config) {
+            startActivityForResult(new Intent(MainActivity.this, Configuracao.class), 11);
 
         }
 
@@ -340,4 +334,15 @@ public class MainActivity extends AppCompatActivity
         return true;
     }
 
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (resultCode == RESULT_OK) {
+            if (requestCode == 11) {
+
+                Snackbar.make(tela, "Configurações implementas com sucesso", Snackbar.LENGTH_SHORT).show();
+            }
+        }else if (resultCode == RESULT_CANCELED){
+            Snackbar.make(tela, "Cancelado", Snackbar.LENGTH_SHORT).show();
+        }
+    }
 }
