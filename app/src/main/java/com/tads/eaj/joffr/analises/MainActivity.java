@@ -54,7 +54,7 @@ public class MainActivity extends AppCompatActivity
     MqttAndroidClient client;
     MqttConnectOptions options;
 
-    Vibrator vibrator;
+//    Vibrator vibrator;
 
     GraphView grafi, grafi2;
     TextView tv, tvh;
@@ -73,7 +73,7 @@ public class MainActivity extends AppCompatActivity
         tvh = (TextView)findViewById(R.id.tvH);
         tela = findViewById(R.id.tela);
 
-        vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
+//        vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
         wifi = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
 
         SetGraficos();
@@ -257,11 +257,11 @@ public class MainActivity extends AppCompatActivity
         grafi2.getViewport().setScrollable(true);
         // set manual X bounds
         grafi2.getViewport().setXAxisBoundsManual(true);
-        grafi2.getViewport().setMinX(1);
+        grafi2.getViewport().setMinX(10);
         grafi2.getViewport().setMaxX(50);
         // set manual Y bounds
         grafi2.getViewport().setYAxisBoundsManual(true);
-        grafi2.getViewport().setMinY(0);
+        grafi2.getViewport().setMinY(50);
         grafi2.getViewport().setMaxY(100);
         series2.setOnDataPointTapListener(new OnDataPointTapListener() {
             @Override
