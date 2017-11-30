@@ -325,7 +325,7 @@ public class MainActivity extends AppCompatActivity
         } else if (id == R.id.nav_gallery) {
 
         } else if (id == R.id.nav_config) {
-            startActivityForResult(new Intent(MainActivity.this, Configuracao.class), 11);
+            startActivityForResult(new Intent(this, Configuracao.class), 11);
 
         }
 

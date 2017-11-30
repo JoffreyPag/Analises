@@ -29,10 +29,10 @@
 
         <service android:name="org.eclipse.paho.android.service.MqttService" />
 
-        <activity
-            android:name=".SettingsActivity"
-            android:label="@string/title_activity_settings" />
-        <activity android:name=".Configuracao" />
+        <activity android:name=".Configuracao">
+            <meta-data android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.tads.eaj.joffr.analises.MainActivity"></meta-data>
+        </activity>
     </application>
 
 </manifest>
