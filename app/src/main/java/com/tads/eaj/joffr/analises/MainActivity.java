@@ -6,7 +6,6 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
-import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.view.View;
 import android.support.design.widget.NavigationView;
@@ -46,8 +45,8 @@ public class MainActivity extends AppCompatActivity
     static String MQTTHOST = "tcp://192.168.50.1:1883";
     static String USERNAME = "JoffrMQTT";
     static String SENHA = "mosquito";
-    String topico = "Temperatura", topicoU = "Umidade";
-    boolean conectado = false;
+    String topico = "Temperatura", topicoU = "Umidade"; //topicos usados nessa aplicação
+    boolean conectado = false; //flag para conexao com o broker
     int xT = 0, xU = 0;
 
     MqttAndroidClient client;
@@ -59,34 +58,25 @@ public class MainActivity extends AppCompatActivity
     TextView tv, tvh;
     View tela;
 
-    //DataPoint[] pontos = new DataPoint[]{new DataPoint(0, 0)};
     LineGraphSeries<DataPoint> series, series2;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-//        Log.d("batata", "onCreate");
-        tv = (TextView) findViewById(R.id.tvt);
-        tvh = (TextView) findViewById(R.id.tvH);
+        tv = findViewById(R.id.tvt);
+        tvh = findViewById(R.id.tvH);
         tela = findViewById(R.id.tela);
 
-//        vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
         wifi = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+
+//        Vibrator vibrator
+//        vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
 
         SetGraficos();
 
         final Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Pub();
-            }
-        });
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
@@ -97,10 +87,14 @@ public class MainActivity extends AppCompatActivity
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
+        //cria o cliente mqtt e tenta conectar
+        CriaClienteMQTT();
 
-        //xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+    }
+
+//====================== METODOS QUE TRABALHAM O MQTT ==============================
+    private void CriaClienteMQTT() {
         //TRABALHANDO O MQTT CLIENT
-        //xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
         String clientId = MqttClient.generateClientId();
         client = new MqttAndroidClient(this.getApplicationContext(), MQTTHOST, clientId);
@@ -111,29 +105,33 @@ public class MainActivity extends AppCompatActivity
 
         //TESTA SE O DISPOSITIVO ESTA CONECTADO AO WIFI, SE NAO ESTIVER ELE NAO TENTARA CONECTAR AO BROKER
         if (wifi.isWifiEnabled()) {
-//            Toast.makeText(this, R.string.wifiConect, Toast.LENGTH_SHORT).show();
             ConectaMQTT();
         } else {
-//            Toast.makeText(this, "o wifi ta desligado", Toast.LENGTH_SHORT).show();
             Snackbar.make(tela, R.string.wifidesc, Snackbar.LENGTH_SHORT).show();
         }
 
         client.setCallback(new MqttCallback() {
+            //aqui trata eventos do mqtt (perda de conexao, chegada de mensagens e envio de mensagens
             @Override
             public void connectionLost(Throwable cause) {
+                //caso a conexao caia
                 Snackbar.make(tela, "Conexão com o Broker perdida", Snackbar.LENGTH_SHORT).show();
                 conectado = false;
             }
 
             @Override
             public void messageArrived(String topic, MqttMessage message) throws Exception {
+                //executa sempre que uma nova mensagem chega do broker que esta conectado
                 String temp;
                 if (topic.equals(topico)) {
                     temp = new String(message.getPayload());
                     float y = Float.valueOf(temp);//Integer.parseInt(temp);
                     tv.setText(temp);
                     xT++;
+                    //para cada novo dado sera jogado no eixo y e o contador x so estara incrementado
+                    //para cada nova menssagem
                     series.appendData(new DataPoint(xT, y), true, 40);
+                    //apenas uma brincadeiras com cores nos graficos
                     if (y < 26) {
                         series.setColor(Color.rgb(0, 188, 212));
                         series.setBackgroundColor(Color.argb(50, 79, 195, 247));
@@ -149,6 +147,7 @@ public class MainActivity extends AppCompatActivity
                     float y = Float.valueOf(temp);
                     tvh.setText(temp);
                     xU++;
+                    //aqui tem a mesma situação do de cima porem eh para um topico diferente
                     series2.appendData(new DataPoint(xU, y), true, 40);
                     if (y > 80) {
                         series2.setColor(Color.rgb(0, 188, 212));
@@ -169,7 +168,6 @@ public class MainActivity extends AppCompatActivity
 
             }
         });
-
     }
 
     private void ConectaMQTT() {
@@ -201,7 +199,8 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    public void Pub() {
+    //se algum dia eu quiser publicar algo....
+   /* public void Pub() {
         String topic = "teste";
         String message = "SCORT THE PAYLOAD!";
 
@@ -210,7 +209,7 @@ public class MainActivity extends AppCompatActivity
         } catch (MqttException e) {
             e.printStackTrace();
         }
-    }
+    }*/
 
     private void setSubcription() {
         try {
@@ -221,7 +220,7 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    //xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+//===============================================================================
 
     public void SetGraficos() {
         //GRAFICO 1
@@ -260,8 +259,8 @@ public class MainActivity extends AppCompatActivity
         grafi2.getViewport().setMaxX(50);
         // set manual Y bounds
         grafi2.getViewport().setYAxisBoundsManual(true);
-        grafi2.getViewport().setMinY(50);
-        grafi2.getViewport().setMaxY(100);
+        grafi2.getViewport().setMinY(40);
+        grafi2.getViewport().setMaxY(90);
         series2.setOnDataPointTapListener(new OnDataPointTapListener() {
             @Override
             public void onTap(Series series, DataPointInterface dataPoint) {
@@ -309,6 +308,8 @@ public class MainActivity extends AppCompatActivity
             }
 
             return true;
+        }else if (id == R.id.action_reset){
+            Reset();
         }
 
         return super.onOptionsItemSelected(item);
@@ -320,9 +321,11 @@ public class MainActivity extends AppCompatActivity
         // Handle navigation view item clicks here.
         int id = item.getItemId();
 
-        if (id == R.id.nav_camera) {
+        /*if (id == R.id.nav_camera) {
             // Handle the camera action
-        } else if (id == R.id.nav_gallery) {
+        } else*/
+        if (id == R.id.nav_info) {
+            startActivity(new Intent(this, Sobre.class));
 
         } else if (id == R.id.nav_config) {
             startActivityForResult(new Intent(this, Configuracao.class), 11);
@@ -338,11 +341,26 @@ public class MainActivity extends AppCompatActivity
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (resultCode == RESULT_OK) {
             if (requestCode == 11) {
+                Bundle b = data.getExtras();
+                MQTTHOST = b.getString("newHost");
+                USERNAME = b.getString("user");
+                SENHA = b.getString("senha");
+
+                //ja pega a nova configuração e ja tenta conectar
+                CriaClienteMQTT();
 
                 Snackbar.make(tela, "Configurações implementas com sucesso", Snackbar.LENGTH_SHORT).show();
             }
-        }else if (resultCode == RESULT_CANCELED){
+        } else if (resultCode == RESULT_CANCELED) {
             Snackbar.make(tela, "Cancelado", Snackbar.LENGTH_SHORT).show();
         }
+    }
+
+    public void Reset() {
+        MQTTHOST = "tcp://192.168.50.1:1883";
+        USERNAME = "JoffrMQTT";
+        SENHA = "mosquito";
+        Snackbar.make(tela, "Configurações alteradas para o de instalação",
+                Snackbar.LENGTH_SHORT).show();
     }
 }

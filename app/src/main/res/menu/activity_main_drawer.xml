@@ -4,12 +4,12 @@
     tools:showIn="navigation_view">
 
     <group android:checkableBehavior="single">
-        <item
+        <!--<item
             android:id="@+id/nav_camera"
             android:icon="@drawable/ic_menu_share"
-            android:title="Firebase(?)" />
+            android:title="Firebase(?)" />-->
         <item
-            android:id="@+id/nav_gallery"
+            android:id="@+id/nav_info"
             android:icon="@drawable/ic_info_black_24dp"
             android:title="Sobre" />
 

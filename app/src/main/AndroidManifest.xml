@@ -11,7 +11,7 @@
 
     <application
         android:allowBackup="true"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@drawable/share"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
@@ -30,8 +30,18 @@
         <service android:name="org.eclipse.paho.android.service.MqttService" />
 
         <activity android:name=".Configuracao">
-            <meta-data android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.tads.eaj.joffr.analises.MainActivity"></meta-data>
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.tads.eaj.joffr.analises.MainActivity" />
+        </activity>
+        <activity
+            android:name=".Sobre"
+            android:label="@string/title_activity_sobre"
+            android:parentActivityName=".MainActivity"
+            android:theme="@style/AppTheme">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.tads.eaj.joffr.analises.MainActivity" />
         </activity>
     </application>
 
