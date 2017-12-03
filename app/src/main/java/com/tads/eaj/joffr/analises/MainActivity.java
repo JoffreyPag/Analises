@@ -3,10 +3,12 @@ package com.tads.eaj.joffr.analises;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.support.design.widget.Snackbar;
+import android.util.Log;
 import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -42,9 +44,14 @@ public class MainActivity extends AppCompatActivity
 
     WifiManager wifi;
 
-    static String MQTTHOST = "tcp://192.168.50.1:1883";
-    static String USERNAME = "JoffrMQTT";
-    static String SENHA = "mosquito";
+    private static final String HOSTSALVO = "ultimoHost";
+    private static final String HOST = "endrecoHost";
+    private static final String USER = "user";
+    private static final String PSWRD = "senha";
+
+    static String MQTTHOST = "";
+    static String USERNAME = "";
+    static String SENHA = "";
     String topico = "Temperatura", topicoU = "Umidade"; //topicos usados nessa aplicação
     boolean conectado = false; //flag para conexao com o broker
     int xT = 0, xU = 0;
@@ -64,6 +71,12 @@ public class MainActivity extends AppCompatActivity
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        SharedPreferences save = getSharedPreferences(HOSTSALVO, MODE_PRIVATE);
+        MQTTHOST = save.getString(HOSTSALVO,"tcp://192.168.50.1:1883");
+        USERNAME = save.getString(USER,"JoffrMQTT");
+        SENHA = save.getString(PSWRD, "mosquito");
+
         tv = findViewById(R.id.tvt);
         tvh = findViewById(R.id.tvH);
         tela = findViewById(R.id.tela);
@@ -235,11 +248,12 @@ public class MainActivity extends AppCompatActivity
         // set manual X bounds
         grafi.getViewport().setXAxisBoundsManual(true);
         grafi.getViewport().setMinX(1);
-        grafi.getViewport().setMaxX(10);
+        grafi.getViewport().setMaxX(20);
         // set manual Y bounds
         grafi.getViewport().setYAxisBoundsManual(true);
         grafi.getViewport().setMinY(24);
-        grafi.getViewport().setMaxY(31);
+        grafi.getViewport().setMaxY(32);
+        grafi.setTitle("Temperatura");
         //listener do ponto
         series.setOnDataPointTapListener(new OnDataPointTapListener() {
             @Override
@@ -255,12 +269,13 @@ public class MainActivity extends AppCompatActivity
         grafi2.getViewport().setScrollable(true);
         // set manual X bounds
         grafi2.getViewport().setXAxisBoundsManual(true);
-        grafi2.getViewport().setMinX(10);
-        grafi2.getViewport().setMaxX(50);
+        grafi2.getViewport().setMinX(0);
+        grafi2.getViewport().setMaxX(40);
         // set manual Y bounds
         grafi2.getViewport().setYAxisBoundsManual(true);
         grafi2.getViewport().setMinY(40);
-        grafi2.getViewport().setMaxY(90);
+        grafi2.getViewport().setMaxY(80);
+        grafi2.setTitle("Umidade");
         series2.setOnDataPointTapListener(new OnDataPointTapListener() {
             @Override
             public void onTap(Series series, DataPointInterface dataPoint) {
@@ -360,7 +375,18 @@ public class MainActivity extends AppCompatActivity
         MQTTHOST = "tcp://192.168.50.1:1883";
         USERNAME = "JoffrMQTT";
         SENHA = "mosquito";
+        CriaClienteMQTT();
         Snackbar.make(tela, "Configurações alteradas para o de instalação",
                 Snackbar.LENGTH_SHORT).show();
+    }
+    @Override
+    protected void onStop() {
+        super.onStop();
+        SharedPreferences sp = getSharedPreferences(HOSTSALVO, MODE_PRIVATE);
+        SharedPreferences.Editor editor = sp.edit();
+        editor.putString(HOST, MQTTHOST);
+        editor.putString(USER, USERNAME);
+        editor.putString(PSWRD, SENHA);
+        editor.commit();
     }
 }

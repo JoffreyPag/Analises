@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#43A047"
+    android:background="@color/colorPrimary"
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
     tools:context="com.tads.eaj.joffr.analises.Sobre"
     tools:showIn="@layout/activity_sobre">
@@ -116,7 +116,7 @@
         android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
         android:gravity="center"
-        android:text="Esse aplicativo tem como objetivo conectar a um broker em ativo na rede local."
+        android:text="Esse aplicativo tem como objetivo conectar a um broker em ativo na rede local.\nOs topicos assinados são: Temperatura e Umidade"
         android:textColor="@android:color/white"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="1.0"

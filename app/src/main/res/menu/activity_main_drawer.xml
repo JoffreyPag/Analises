@@ -19,8 +19,7 @@
         <menu>
             <item
                 android:id="@+id/nav_config"
-                android:icon="@drawable/settings_icon"
-                android:iconTint="@android:color/black"
+                android:icon="@drawable/ic_settings"
                 android:title="Configuração" />
         </menu>
     </item>
