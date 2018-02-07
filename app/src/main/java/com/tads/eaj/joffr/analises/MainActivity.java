@@ -44,6 +44,7 @@ public class MainActivity extends AppCompatActivity
 
     WifiManager wifi;
 
+    //commit and push test
     private static final String HOSTSALVO = "ultimoHost";
     private static final String HOST = "endrecoHost";
     private static final String USER = "user";
